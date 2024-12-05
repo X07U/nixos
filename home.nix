@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, inputs, lib, ... }:
 {
 	home.username = "xozu";
   home.homeDirectory = "/home/xozu";
@@ -88,14 +88,16 @@
 			};
 
 		decoration = {
-			rounding = 10;
+			rounding = 5;
 		blur = {
-			enabled = false;
-			size = 8;
+			enabled = true;
+			size = 10;
+			passes = 4;
 			};
 		dim_inactive = false;
 		dim_strength = "0.2";
 		inactive_opacity = "0.80";
+		# active_opacity = "0.95";
 		shadow = {
 			enabled = "yes";
 			range = 5;
@@ -120,7 +122,7 @@
 		};
 
 		windowrulev2 = "suppressevent maximize, class:.*";
-		windowrule = "opacity 0.92 0.85,thunar";
+		# windowrule = "opacity 0.92 0.85,thunar";
 		dwindle = {
 			pseudotile = "yes"; 
 			preserve_split = "yes"; 
@@ -184,7 +186,7 @@
       ];
 
     bindr = [
-      "$mod, $mod_L, exec, launcher_t3"
+      "$mod, $mod_L, exec, hyprlauncher"
 	     ];
 
     binde = [
@@ -216,30 +218,19 @@
 			mainBar = {
 				layer = "top";
 				position = "left";
-				margin = "3";
+				margin = "3px";
 				width = 40;
  
 				modules-left = ["hyprland/workspaces"];
 				modules-center = ["clock"];
 				modules-right = [ "wireplumber" "battery" "hyprland/language" "backlight" "tray" "custom/powermenu"];
+				
+# ✨ MODULES ✨
 
 				"hyprland/language" = {
 					"format" = "{}";
 					"format-en" = "";
 					"format-sk" = "";
-				};
-
-# ✨ MODULES ✨
-
-				"bluetooth" = {
-					"format-on" = "";
-					"format" = "";
-					"format-off" = "";
-					"on-click" = "bluetoothctl power off && systemctl stop bluetooth";
-					"format-connected" = "󰂱";
-					"tooltip-format" = "{controller_alias}\t{controller_address}";
-					"tooltip-format-connected" = "{controller_alias}\t{controller_address}\n\n{device_enumerate}";
-					"tooltip-format-enumerate-connected" = "{device_alias}\t{device_address}";
 					};
 
 				"hyprland/workspaces" = {
@@ -247,29 +238,30 @@
 					"format-window-separator" = "\n";
 					"window-rewrite-default" = "";
 					"window-rewrite" = {
-					"Freetube" = "󰗃";
-					"firefox" = "󰈹";
-					"title<vim>" = "";
+						"Freetube" = "󰗃";
+						"firefox" = "󰈹";
+						"title<vim>" = "";
 				  	"title<nvim>" = "";
-					"title<helix>" = "󰚄";
+						"title<helix>" = "󰚄";
 				  	"class<kitty>" = "󰄛";
-					"timeshift" = "󱫐";
-					"gimp" = "";
-					"mpv" = "";
-					"mirage" = "";
-					"evince" = "󰈙";
-					"libre" = "";
-					"thunar" = "󰪶";
-					"pavucontrol" = "󰗅";
+						"timeshift" = "󱫐";
+						"gimp" = "";
+						"mpv" = "";
+						"mirage" = "";
+						"evince" = "󰈙";
+						"libre" = "";
+						"thunar" = "󰪶";
+						"pavucontrol" = "󰗅";
+						"zen" = "";
+						};
 					};
-				};
 
 				"clock" = {
 	        "format" = "{:%H\n%M}";
 	        "tooltip-format" = "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>";
 					"calendar" = {
 						"format" = {
-							"today" = "<span color='#fa0cc6'><u>{}</u></span>";
+							"today" = "<span color='#7C69D2'><u>{}</u></span>";
 							};
 						};
 			    };
@@ -290,7 +282,6 @@
 					"rotate" = 90;
 					"tooltip-format" = "{volume}%";
 					};
-
 
 				"battery" = {
 					"states" = {
@@ -322,6 +313,12 @@
 					"smooth-scrolling-threshold" = 1;
 				  };
 
+				"memory" = {
+					"interval" = 60;
+					"format" = "";
+					"tooltip-format" = "{percentage}% RAM\n{swapPercentage}% SWAP";
+				};
+
 				"custom/powermenu" = {
 					"format" = "󰐥";
 					"tooltip" = false;
@@ -335,14 +332,14 @@
 
 programs.waybar.style = 
 	''
-	* 
-	{
+	*{
 	font-family: "JetBrainsMono Nerd Font,JetBrainsMono NF";
 	font-size: 22px;
+	font-weight: bold;
 	}
 	
 	window#waybar {
-		background: #343051;
+		background: rgba(0,0,0,0);
 		}
 
 	#workspaces {
@@ -387,7 +384,7 @@ programs.waybar.style =
 		}
 
 	#battery {
-		padding-left: 7px;
+		padding-left: 1px;
 		}
 
 	#battery.warning:not(.charging) {
@@ -400,8 +397,12 @@ programs.waybar.style =
 
 	#backlight {
 		padding-top: 10px;
-		padding-right: 7px;
+		padding-right: 3px;
 		}
+
+	#memory {
+		padding-right: 10px;
+	}
 
 	#backlight.full {
 		color: yellow;
@@ -415,7 +416,7 @@ programs.waybar.style =
 
 	#custom-powermenu {
 		color: #fa0018;
-		padding-bottom: 15;
+		padding-bottom: 15px;
 		padding-left: 3px;
 		border-bottom: 3px solid;
 		border-color: white;
@@ -423,9 +424,21 @@ programs.waybar.style =
 		border-bottom-right-radius: 50px;
 		}
 
+	tooltip {
+	  border: solid;
+	  border-width: 1.5px;
+	  border-radius: 8px;
+	  border-color: #cdd6f4;
+		}
+		tooltip label {
+		  color: #cdd6f4;
+		  font-weight: normal;
+		  margin: 0.25px;
+		}
+
 	#pulseaudio-slider,#wireplumber,#battery,
 	#backlight,#tray,#custom-updates,
-	#custom-powermenu,#clock,#workspaces,#language {
+	#custom-powermenu,#clock,#workspaces,#language,#memory {
 		background: #0e0c1a;
 		}
 	'';
@@ -472,6 +485,7 @@ programs.waybar.style =
 			config = "cd /etc/nixos && sudoedit configuration.nix";
 			home = "cd /etc/nixos && sudoedit home.nix";
 			flake = "cd /etc/nixos && sudoedit flake.nix";
+			hardware = "cd /etc/nixos && sudoedit hardware-configuration.nix";
 			};
 		};
 
@@ -488,6 +502,7 @@ programs.waybar.style =
 			line_height = 1;
 			use_font_shaping = true;
 			selecion_background = "#6a6094";
+			background_opacity = lib.mkForce 0.8;
 			};
 		};
 
@@ -562,9 +577,12 @@ programs.waybar.style =
 # ✨			✨ HELIX ✨			✨
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━┛ 
 
-	stylix.targets.helix.enable = false;
+	stylix.targets = {
+		helix.enable = false;
+		waybar.enable = false;
+		};
 
-	programs.helix = {
+		programs.helix = {
 		enable = true;
 		defaultEditor = true;
 		settings = {
@@ -686,6 +704,9 @@ programs.waybar.style =
   })
   ];
 
+	programs.zathura.enable = true;
+	
+
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ HOME MANAGER ✨			✨
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -697,7 +718,8 @@ programs.waybar.style =
      };
 
   home.sessionVariables = {
-    # EDITOR = "emacs";
+		BROWSER = "firefox";
+		TERMINAL = "kitty";
 	  };
 
   programs.home-manager.enable = true;
@@ -716,6 +738,11 @@ programs.waybar.style =
 		  };
 		iconTheme.name = "Papirus-Dark";
 	  };
+
+	qt = {
+	  enable = true;
+	  platformTheme.name = "gtk";
+		};
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ DUNST ✨			✨
@@ -771,4 +798,152 @@ programs.waybar.style =
 	    };
 	  };
 	};
+
+# ┏━━━━━━━━━━━━━━━━━━━━━━┓
+# ✨			✨ MPV ✨			✨
+# ┗━━━━━━━━━━━━━━━━━━━━━━┛
+
+	programs = {
+		mpv.enable = true;
+		};
+
+# ┏━━━━━━━━━━━━━━━━━━━━━━┓
+# ✨			✨ EZA ✨			✨
+# ┗━━━━━━━━━━━━━━━━━━━━━━┛
+
+	programs.eza = {
+		enable = true;
+		icons = "always";
+		extraOptions = [ "-T" ];
+ 		};
+
+# ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+# ✨			✨ WLOGOUT ✨			✨
+# ┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+	programs.wlogout = {
+		enable = true;
+		layout = [
+			{
+		    label = "lock";
+		    action = "hyprlock";
+		    keybind = "x";
+			}
+			{
+		    label = "reboot";
+		    action = "systemctl reboot";
+		    keybind = "r";
+			}
+			{
+		    label = "logout";
+		    action = "hyprctl dispatch exit";
+		    keybind = "l";
+			}
+			{
+		    label = "shutdown";
+		    action = "systemctl poweroff";
+		    keybind = "s";
+			}
+			];
+		style = ''
+		* {
+    background-image: none;
+    transition: 20ms;
+    box-shadow: none;
+		}
+
+		window {
+	    background-image: url("/home/xozu/Pictures/wallpaper.png");
+			}
+
+		button {
+	    color: #FFFFFF;
+	    background-position: center;
+	    background-repeat: no-repeat;
+	    background-size: 20%;
+	    border: none;
+		  border-radius: 10px;
+		  outline-style: none;
+			}
+
+		/* options */ 
+		#lock {
+	    background-color: #7C69D2;
+			background-image: url("/home/xozu/Downloads/lock.png");
+	    border-radius: 5px 0px 0px 0px;
+	    margin : 50px 0px 0px 110px;
+			}
+
+		#reboot {
+	    background-color: #9887E0;
+			background-image: url("/home/xozu/Downloads/lock.png");
+		  border-radius: 0px 0px 0px 5px;
+	    margin : 0px 0px 250px 550px;
+			}
+
+		#logout {
+	    background-color: #B5A6ED;
+			background-image: url("/home/xozu/Downloads/lock.png");
+		  border-radius: 0px 5px 0px 0px;
+	    margin : 250px 550px 0px 0px;
+			}
+
+		#shutdown {
+	    background-color: #D3CFF9;
+			background-image: url("/home/xozu/Downloads/lock.png");
+		  border-radius: 0px 0px 5px 0px;
+	    margin : 0px 550px 250px 0px;
+			}
+
+		/* options on hover */ 
+		button:hover {
+	    background-size: 25%;
+			}
+
+		button:hover#lock {
+	    border-radius: 10px 10px 0px 10px;
+	    margin : 80px 0px 0px 530px;
+			}
+
+		button:hover#reboot {
+	    border-radius: 10px 0px 10px 10px;
+	    margin : 0px 0px 80px 530px;
+			}
+
+		button:hover#logout {
+	    border-radius: 10px 10px 10px 0px;
+	    margin : 80px 530px 0px 0px;
+			}
+
+		button:hover#shutdown {
+	    border-radius: 0px 10px 10px 10px;
+	    margin: 0px 530px 80px 0px;
+			}
+		'';
+	};
+
+# ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+# ✨			✨ NCMPCPP ✨			✨
+# ┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+	programs.ncmpcpp.enable = true;
+
+# ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
+# ✨			✨ OTHER ✨			✨
+# ┗━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+	programs.btop.enable = true;
+
+	programs.yazi.enable = true;
+	programs.zoxide.enable = true;
+
+	#This is very handy. In this case it rewrites use_gtk_colors to true in Hyprlaunchers config file
+	home.activation.modifyHyprlauncherConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  if [ -f ~/.config/hyprlauncher/config.json ]; then
+    jq '.window.use_gtk_colors = true' ~/.config/hyprlauncher/config.json > ~/.config/hyprlauncher/config.json.tmp
+    mv ~/.config/hyprlauncher/config.json.tmp ~/.config/hyprlauncher/config.json
+  fi
+'';
+
+
 }
