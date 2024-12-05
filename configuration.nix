@@ -1,4 +1,9 @@
 { config, pkgs, lib, inputs, ... }:
+  let
+    GreetdHyprlandConfig = pkgs.writeText "greetd-hyprland-config" ''
+      exec-once = regreet; hyprctl dispatch exit
+    '';
+  in
 {
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ CORE ✨			✨
@@ -14,13 +19,7 @@
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "24.05"; # Did you read the comment?
+  system.stateVersion = "24.05"; 
 
 # ✨ GRUB ✨
 
@@ -44,13 +43,15 @@
     hyprland.enable = true;
     firefox.enable = true;
     zsh.enable = true;
-    thunar.enable = true;
+    thunar.enable = true; #to open files with Helix (or any other terminal app) do "open with -> set default application -> command 'kitty -e hx %F'"
+    #to fix openTerminal, do edit -> configure custom actions -> settings -> command 'kitty'
     };
+
+  programs.xfconf.enable = true;
 
   environment.systemPackages = with pkgs; [
     unzip
     git
-    nerdfonts  
     gimp
     hyprpicker
     wl-clipboard
@@ -58,6 +59,15 @@
     hyprshot
     nil
     vscode-langservers-extracted
+    greetd.tuigreet
+    pavucontrol
+    glib #only got this for gsettings
+    hyprlauncher
+    ];
+
+  fonts.packages = with pkgs; [
+    nerd-fonts.iosevka
+    nerd-fonts.jetbrains-mono
     ];
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -71,7 +81,10 @@
 
 # ✨ BLUETOOTH ✨
 
-  hardware.bluetooth.enable = true;
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = false;
+    };
   services.blueman.enable = true;
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -97,15 +110,47 @@
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ SERVICES ✨			✨
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ 
-
-  # Enable the X11 windowing system.
-  services.xserver.enable = true;
-  
   services.flatpak.enable = true;
+  services.gvfs.enable = true;
+  services.tlp.enable = true;
 
-  # Enable the GNOME Desktop Environment.
-  services.xserver.displayManager.gdm.enable = true;
-  services.xserver.desktopManager.gnome.enable = true;
+  # services.xserver.displayManager.gdm.enable = true;
+
+
+  # services.greetd = {
+  #   enable = true;
+  #   settings = {
+  #     default_session = {
+  #       command = "Hyprland";
+  #       user = "xozu";
+  #     };
+  #   };
+  # };
+
+  services.greetd = {
+      enable = true;
+      settings = {
+        default_session = {
+          command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --asterisks --asterisks-char '•' --greeting 'System Operational ... Authentication in Progress' --user-menu --remember --theme 'border=magenta;text=cyan;prompt=gree;time=magenta;action=magenta;container=black;input=magenta' --cmd Hyprland";
+          user = "greeter";
+        };
+      };
+    };
+
+  # systemd.services.greetd.serviceConfig = {
+  #   Type = "idle";
+  #   StandardInput = "tty";
+  #   StandardOutput = "tty";
+  #   StandardError = "journal";
+  #   TTYReset = true;
+  #   TTYVHangup = true;
+  #   TTYVTDisallocate = true;
+  # };
+    
+  # programs.regreet = {
+  #   enable = true;
+  #   # theme.name = lib.mkForce "Adwaita-dark";
+  #   };
 
   # Configure keymap in X11
   services.xserver.xkb = {
@@ -131,6 +176,7 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
+    wireplumber.enable = true;
     # If you want to use JACK applications, uncomment this
     #jack.enable = true;
     };
@@ -141,7 +187,6 @@
 
   users.users.xozu = {
     isNormalUser = true;
-    description = "David";
     extraGroups = [ "networkmanager" "wheel" ];
     shell = pkgs.zsh;
     packages = with pkgs; [
