@@ -1,25 +1,37 @@
-{ config, pkgs, lib, inputs, ... }:
-  let
-    GreetdHyprlandConfig = pkgs.writeText "greetd-hyprland-config" ''
-      exec-once = regreet; hyprctl dispatch exit
-    '';
-  in
-{
+{ config, pkgs, lib, inputs, ... }: {
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ CORE ✨			✨
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━┛ 
-  imports =
-    [ 
+  imports = [ 
       ./hardware-configuration.nix
       inputs.home-manager.nixosModules.default
-    ];
-  
+  ];
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nixpkgs.config.allowUnfree = true; 
-
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
-
   system.stateVersion = "24.05"; 
+  powerManagement.enable = true;
+  services.thermald.enable = true;
+  nix.optimise.automatic = true;
+
+  services.thinkfan.enable = true;
+
+# ✨ SYSTEMD ✨
+
+  systemd = {
+    services."garbage".script = ''
+      for profile in /nix/var/nix/profiles/system $HOME/.local/state/nix/profiles/profile $HOME/.local/state/nix/profiles/home-manager; do
+        sudo nix-env --delete-generations +5 -p $profile;
+      done
+    '';
+    timers."garbage" = {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "weekly";
+        Persistent = true;
+      };
+    };
+  };
 
 # ✨ GRUB ✨
 
@@ -32,8 +44,8 @@
       enable = true;
       efiSupport = true;
       devices = [ "nodev" ];
-      };
     };
+  };
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ PROGRAMS ✨			✨
@@ -43,17 +55,15 @@
     hyprland.enable = true;
     firefox.enable = true;
     zsh.enable = true;
-    thunar.enable = true; #to open files with Helix (or any other terminal app) do "open with -> set default application -> command 'kitty -e hx %F'"
-    #to fix openTerminal, do edit -> configure custom actions -> settings -> command 'kitty'
-    };
-
-  programs.xfconf.enable = true;
+    file-roller.enable = true;
+    xfconf.enable = true;
+    git.enable = true;
+  };
 
   environment.systemPackages = with pkgs; [
-    unzip
-    git
     gimp
     hyprpicker
+    hyprpolkitagent
     wl-clipboard
     brightnessctl
     hyprshot
@@ -61,22 +71,22 @@
     vscode-langservers-extracted
     greetd.tuigreet
     pavucontrol
-    glib #only got this for gsettings
-    hyprlauncher
-    ];
+    mpd
+  ];
 
   fonts.packages = with pkgs; [
     nerd-fonts.iosevka
     nerd-fonts.jetbrains-mono
-    ];
+  ];
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ NETWORK ✨			✨
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛ 
 
-  networking.hostName = "nixos"; 
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-  networking.networkmanager.enable = true;
+  networking = {
+    hostName = "nixos"; 
+    networkmanager.enable = true;
+  };
   programs.nm-applet.enable = true;
 
 # ✨ BLUETOOTH ✨
@@ -84,7 +94,7 @@
   hardware.bluetooth = {
     enable = true;
     powerOnBoot = false;
-    };
+  };
   services.blueman.enable = true;
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -92,9 +102,7 @@
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛ 
 
   time.timeZone = "Europe/Bratislava";
-
   i18n.defaultLocale = "en_GB.UTF-8";
-
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "sk_SK.UTF-8";
     LC_IDENTIFICATION = "sk_SK.UTF-8";
@@ -105,70 +113,35 @@
     LC_PAPER = "sk_SK.UTF-8";
     LC_TELEPHONE = "sk_SK.UTF-8";
     LC_TIME = "sk_SK.UTF-8";
-    };
+  };
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ SERVICES ✨			✨
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ 
-  services.flatpak.enable = true;
-  services.gvfs.enable = true;
-  services.tlp.enable = true;
 
-  # services.xserver.displayManager.gdm.enable = true;
+  services = {
+    flatpak.enable = true;
+    gvfs.enable = true;
+    tlp.enable = true;
+    printing.enable = true;
+  };
 
-
-  # services.greetd = {
-  #   enable = true;
-  #   settings = {
-  #     default_session = {
-  #       command = "Hyprland";
-  #       user = "xozu";
-  #     };
-  #   };
-  # };
+# ✨ GREETD ✨
 
   services.greetd = {
-      enable = true;
-      settings = {
-        default_session = {
-          command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --asterisks --asterisks-char '•' --greeting 'System Operational ... Authentication in Progress' --user-menu --remember --theme 'border=magenta;text=cyan;prompt=gree;time=magenta;action=magenta;container=black;input=magenta' --cmd Hyprland";
-          user = "greeter";
-        };
+    enable = true;
+    settings = {
+      default_session = {
+        command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --asterisks --asterisks-char '•' --greeting 'System Operational ... Authentication in Progress' --user-menu --remember --theme 'border=magenta;text=cyan;prompt=gree;time=magenta;action=magenta;container=black;input=magenta' --cmd Hyprland";
+        user = "greeter";
       };
     };
-
-  # systemd.services.greetd.serviceConfig = {
-  #   Type = "idle";
-  #   StandardInput = "tty";
-  #   StandardOutput = "tty";
-  #   StandardError = "journal";
-  #   TTYReset = true;
-  #   TTYVHangup = true;
-  #   TTYVTDisallocate = true;
-  # };
-    
-  # programs.regreet = {
-  #   enable = true;
-  #   # theme.name = lib.mkForce "Adwaita-dark";
-  #   };
-
-  # Configure keymap in X11
-  services.xserver.xkb = {
-    layout = "gb";
-    variant = "";
-    };
-
-  # Configure console keymap
-  console.keyMap = "uk";
-
-  # Enable CUPS to print documents.
-  services.printing.enable = true;
+  };
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ SOUND ✨			✨
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━┛ 
 
-  # Enable sound with pipewire.
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -177,9 +150,7 @@
     alsa.support32Bit = true;
     pulse.enable = true;
     wireplumber.enable = true;
-    # If you want to use JACK applications, uncomment this
-    #jack.enable = true;
-    };
+  };
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ USER ✨			✨
@@ -189,11 +160,8 @@
     isNormalUser = true;
     extraGroups = [ "networkmanager" "wheel" ];
     shell = pkgs.zsh;
-    packages = with pkgs; [
-
-      ];
-    };
-    environment.pathsToLink = [ "/share/zsh" ];
+  };
+  environment.pathsToLink = [ "/share/zsh" ];
 
  # ✨ HOME MANAGER ✨ 
 
@@ -201,8 +169,8 @@
     extraSpecialArgs = { inherit inputs; };
     users = {
       "xozu" = import ./home.nix;
-      };
     };
+  };
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ STYLIX ✨			✨
@@ -213,7 +181,7 @@
     image = pkgs.fetchurl {
       url = "https://i.postimg.cc/SKJtdrYT/wallpaper.png";
       sha256 = "sha256-E6W5wRTkX+g737+l3BqOkb68phtKCcl3HBeIZ8ij6tg=";
-      };
+    };
     base16Scheme = {
       base00 = "14131d";
       base01 = "343051";
@@ -231,15 +199,48 @@
       base0D = "beddff";
       base0E = "e7c5ff";
       base0F = "b8b8ff";
-      };
+    };
     autoEnable = true;
     cursor = {
       package = pkgs.catppuccin-cursors.mochaMauve;
       name = "catppuccin-mocha-mauve-cursors";
       size = 16;
-      };
+    };
     targets = {
       grub.enable = false;
-      };
     };
+  };
+
+# ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+# ✨			✨ THUNAR ✨			✨
+# ┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  #to open files with Helix (or any other terminal app) do "open with -> set default application -> command 'kitty -e hx %F'"
+  #to fix openTerminal, do edit -> configure custom actions -> settings -> command 'kitty'
+  programs.thunar = {
+    enable = true;
+    plugins = with pkgs.xfce; [ thunar-archive-plugin thunar-volman ];
+  };
+
+services.mpd = {
+		enable = true;
+    user = "xozu";
+    musicDirectory = "/home/xozu/Music";
+    extraConfig = ''
+  audio_output {
+    type "alsa"
+    name "My ALSA"
+    device			"hw:0,0"	# optional 
+    format			"44100:16:2"	# optional
+    mixer_type		"hardware"
+    mixer_device	"default"
+    mixer_control	"PCM"
+  }
+'';
+	};
+#   systemd.services.mpd.environment = {
+#     # https://gitlab.freedesktop.org/pipewire/pipewire/-/issues/609
+#     XDG_RUNTIME_DIR = "/run/user/${toString config.users.users.xozu.uid}"; # User-id must match above user. MPD will look inside this directory for the PipeWire socket.
+# };
+
 }
