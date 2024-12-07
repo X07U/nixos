@@ -1,11 +1,8 @@
-{ config, pkgs, inputs, lib, ... }:
-{
+{ config, pkgs, inputs, lib, ... }: {
 	home.username = "xozu";
   home.homeDirectory = "/home/xozu";
-  # You should not change this value, even if you update Home Manager. If you do
-  # want to update the value, then make sure to first check the Home Manager
-  # release notes.
-  home.stateVersion = "24.05"; # Please read the comment before changing.
+  home.stateVersion = "24.05"; 
+  imports = [ inputs.textfox.homeManagerModules.default inputs.walker.homeManagerModules.default];
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ HYPRLAND SETUP ✨			✨
@@ -13,7 +10,10 @@
 	wayland.windowManager.hyprland = {
 		enable = true;
 		xwayland.enable = true;
-		systemd.enable = true;
+		systemd = {
+			enable = true;
+			variables = ["--all"];
+		};
 
 # ✨ SETTINGS ✨
 
@@ -21,24 +21,24 @@
 			"$mod" = "SUPER";
 			"$terminal" = "kitty";
 			"$fileManager" = "thunar";
-			"exec-once" = [ "waybar" "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1" "nm-applet" "blueman-applet" ];
+			"exec-once" = [ "waybar" "systemctl --user start hyprpolkitagent" "nm-applet" "blueman-applet" ];
 
 # ✨ VARIABLES ✨
 
 		env = [
-        "XCURSOR_THEME,catppuccin-mocha-mauve-cursors"
-        "XCURSOR_SIZE,16"
-        "HYPRCURSOR_THEME,catppuccin-mocha-mauve-cursors"
-        "HYPRCURSOR_SIZE,16"
-				"HYPRSHOT_DIR,$HOME/Pictures/Screenshots"
-      ];
+      "XCURSOR_THEME,catppuccin-mocha-mauve-cursors"
+      "XCURSOR_SIZE,16"
+      "HYPRCURSOR_THEME,catppuccin-mocha-mauve-cursors"
+      "HYPRCURSOR_SIZE,16"
+			"HYPRSHOT_DIR,$HOME/Pictures/Screenshots"
+    ];
 
 # ✨ MONITORS ✨
 
 		monitor = [
 			"eDP-1, 1920x1200@60, 0x0, 1"
 			"HDMI-A-1, preffered, auto, 1"
-			];
+		];
 
 		workspace = [
 			"1, monitor:eDP-1"
@@ -50,21 +50,21 @@
 			"7, monitor:eDP-1"
 			"8, monitor:eDP-1"
 			"9, monitor:HDMI-A-1"
-			];        
+		];        
 
 # ✨ INPUTS ✨
 
 		device = {
 			name = "epic-mouse-v1";
 			sensitivity = "-0.5";
-			};
+		};
 
 		gestures = {
 			workspace_swipe = "on";
 			workspace_swipe_cancel_ratio = 0;
 			workspace_swipe_min_speed_to_force = 0;
 			workspace_swipe_distance = 75;
-			};
+		};
 
 		input = {
 			kb_layout = "us,sk";
@@ -73,7 +73,7 @@
 			follow_mouse = "1";
 			touchpad = {
 				natural_scroll = "yes";
-  			};
+			};
 		};
 
 # ✨ DESIGN ✨
@@ -85,14 +85,14 @@
 			border_size = 2;
 			layout = "dwindle";
 			allow_tearing = false;
-			};
+		};
 
 		decoration = {
 			rounding = 5;
-		blur = {
-			enabled = true;
-			size = 10;
-			passes = 4;
+			blur = {
+				enabled = true;
+				size = 10;
+				passes = 4;
 			};
 		dim_inactive = false;
 		dim_strength = "0.2";
@@ -102,8 +102,8 @@
 			enabled = "yes";
 			range = 5;
 			render_power = "1";
-			};    
-		};
+		};    
+	};
 
 		animations = {
 			enabled = "yes";
@@ -112,17 +112,16 @@
 				"windowclose, 1, 0, 0, 1"
 				"windowin, 0.01, 1, 0.5, 1"
 				"workspacemove, 1, 1, 1, 1"
-				];
+			];
 			animation = [
 				"windowsMove, 1, 6, windowmove"
 				"windowsIn, 1, 7, windowin"
 				"windowsOut, 0, 1, windowclose"
 				"workspaces, 1, 0.001, default, slidevert"
-				];
+			];
 		};
 
 		windowrulev2 = "suppressevent maximize, class:.*";
-		# windowrule = "opacity 0.92 0.85,thunar";
 		dwindle = {
 			pseudotile = "yes"; 
 			preserve_split = "yes"; 
@@ -141,7 +140,7 @@
       "$mod, F, fullscreen, "
       "$mod, H, togglesplit, "
       "$mod, O, exec, hyprctl setprop active opaque toggle "
-      "$mod, P, pseudo, "
+      "$mod, P, exec, hyprpicker -a "
       "$mod, left, movefocus, l "
       "$mod, right, movefocus, r "
       "$mod, up, movefocus, u "
@@ -160,7 +159,7 @@
       "$mod SHIFT, K, movewindow, d "
       "$mod, Tab, exec, $terminal "
       "$mod, E, exec, $fileManager "
-      "$mod, M, exec, powermenu_t4 "
+      "$mod, M, exec, wlogout -b 2 "
       "$mod, 1, workspace, 1"
       "$mod, 2, workspace, 2"
       "$mod, 3, workspace, 3"
@@ -183,11 +182,11 @@
       "$mod SHIFT, S, movetoworkspace, special:magic"
 			", PRINT, exec, hyprshot -m region"
 			"$mod, PRINT, exec, hyprshot -m output"
-      ];
+    ];
 
     bindr = [
-      "$mod, $mod_L, exec, hyprlauncher"
-	     ];
+      "$mod, $mod_L, exec, fuzzel"
+     ];
 
     binde = [
     	"$mod CTRL, up, exec, hyprctl dispatch resizeactive 0 -20"
@@ -199,14 +198,14 @@
 			", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
 			", xf86monbrightnessup, exec, brightnessctl set 10%+"
 			", xf86monbrightnessdown, exec, brightnessctl set 10%-"
-      ];
+    ];
 
     bindm = [
     	"$mod, mouse:272, movewindow"
 			"$mod, mouse:273, resizewindow"
-			];
-		 };
+		];
 	 };
+ };
  
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ WAYBAR ✨			✨
@@ -231,7 +230,7 @@
 					"format" = "{}";
 					"format-en" = "";
 					"format-sk" = "";
-					};
+				};
 
 				"hyprland/workspaces" = {
 					"format" = "<sub>{icon}</sub>\n{windows}";
@@ -242,7 +241,10 @@
 						"firefox" = "󰈹";
 						"title<vim>" = "";
 				  	"title<nvim>" = "";
-						"title<helix>" = "󰚄";
+						"title<.*hx.*>" = "󰚄";
+						"title<home>" = "󰚄";
+						"title<config>" = "󰚄";
+						"title<flake>" = "󰚄";
 				  	"class<kitty>" = "󰄛";
 						"timeshift" = "󱫐";
 						"gimp" = "";
@@ -250,11 +252,13 @@
 						"mirage" = "";
 						"evince" = "󰈙";
 						"libre" = "";
+						"onlyoffice" = "";
 						"thunar" = "󰪶";
 						"pavucontrol" = "󰗅";
-						"zen" = "";
-						};
+						"zen" = "";
+						"zathura" = "󱔗";
 					};
+				};
 
 				"clock" = {
 	        "format" = "{:%H\n%M}";
@@ -262,9 +266,9 @@
 					"calendar" = {
 						"format" = {
 							"today" = "<span color='#7C69D2'><u>{}</u></span>";
-							};
 						};
-			    };
+					};
+		    };
 
 				"wireplumber" = {
 					"format-muted" = "";
@@ -272,7 +276,7 @@
 					"states" = {
 						"veryhigh" = 101;
 						"max" = 150;
-						};
+					};
 					"on-click" = "pactl set-sink-mute @DEFAULT_SINK@ toggle";
 					"on-click-right" = "pavucontrol";
 					"max-volume" = 150;
@@ -281,7 +285,7 @@
 					"scroll-step" = 1;
 					"rotate" = 90;
 					"tooltip-format" = "{volume}%";
-					};
+				};
 
 				"battery" = {
 					"states" = {
@@ -289,29 +293,29 @@
 						"normal" = 90;
 						"warning" = 25;
 						"critical" = 15;
-						};
+					};
 					"format" = "{icon}";
 					"interval" = 5;
 	        "format-icons" = { 
 						"default" = ["󰂎" "󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂" "󰁹"];
 						"charging" = ["󰢜" "󰂆" "󰂇" "󰂈" "󰢝" "󰂉" "󰢞" "󰂊" "󰂋" "󰂅"];
-						};
+					};
 					"tooltip-format" = "{capacity}%";
-			    };
+		    };
 
 				"backlight" = {
 					"device" = "intel_backlight";
 					"format" = "{icon}";
 					"states" = {
 						"full" = 100;
-						};
+					};
 					"format-icons" = ["" "" "" "" "" "" "" "" "" "" "" "" "" "" ""];
 					"on-scroll-down" = "brightnessctl s 5%-";
 					"on-scroll-up" = "brightnessctl s +5%";
 					"tooltip" = true;
 					"tooltip-format" = "{percent}% ";
 					"smooth-scrolling-threshold" = 1;
-				  };
+			  };
 
 				"memory" = {
 					"interval" = 60;
@@ -323,112 +327,111 @@
 					"format" = "󰐥";
 					"tooltip" = false;
 					"on-click" = "powermenu_t4";
-					};
 				};
 			};
 		};
+	};
 
 # ✨ STYLE ✨
 
-programs.waybar.style = 
-	''
-	*{
-	font-family: "JetBrainsMono Nerd Font,JetBrainsMono NF";
-	font-size: 22px;
-	font-weight: bold;
-	}
+	programs.waybar.style = ''
+		*{
+		font-family: "JetBrainsMono Nerd Font,JetBrainsMono NF";
+		font-size: 22px;
+		font-weight: bold;
+		}
 	
-	window#waybar {
-		background: rgba(0,0,0,0);
+		window#waybar {
+			background: rgba(0,0,0,0);
 		}
 
-	#workspaces {
-		padding: 10px 5px 20px 0px;
-  	border-bottom: 3px solid;
-  	border-bottom-left-radius: 5px;
-  	border-bottom-right-radius: 50px;
-  	border-top: 3px solid;
-  	border-top-left-radius: 50px;
-  	border-top-right-radius: 5px;
+		#workspaces {
+			padding: 10px 5px 20px 0px;
+	  	border-bottom: 3px solid;
+	  	border-bottom-left-radius: 5px;
+	  	border-bottom-right-radius: 50px;
+	  	border-top: 3px solid;
+	  	border-top-left-radius: 50px;
+	  	border-top-right-radius: 5px;
 		}
 
-	#workspaces button {
-		padding: 0 5px;
-  	background-color: transparent;
+		#workspaces button {
+			padding: 0 5px;
+	  	background-color: transparent;
 		}
 
-	#workspaces button.active {
-		color: #7C69D2;
+		#workspaces button.active {
+			color: #7C69D2;
 		}
 
-	#clock {
-		padding: 20px 5px 20px 5px;
-  	border-bottom: 3px solid;
-  	border-bottom-left-radius: 5px;
-  	border-bottom-right-radius: 50px;
-  	border-top: 3px solid;
-  	border-top-left-radius: 50px;
-  	border-top-right-radius: 5px;
+		#clock {
+			padding: 20px 5px 20px 5px;
+	  	border-bottom: 3px solid;
+	  	border-bottom-left-radius: 5px;
+	  	border-bottom-right-radius: 50px;
+	  	border-top: 3px solid;
+	  	border-top-left-radius: 50px;
+	  	border-top-right-radius: 5px;
 		}
 
-	#wireplumber {
-		border-top: 3px solid @border;
-  	border-top-left-radius: 50px;
-  	border-top-right-radius: 5px;
-		padding-top: 25px;
-		padding-bottom: 10px;
+		#wireplumber {
+			border-top: 3px solid @border;
+	  	border-top-left-radius: 50px;
+	  	border-top-right-radius: 5px;
+			padding-top: 25px;
+			padding-bottom: 10px;
 		}
 
-	#wireplumber.veryhigh {
-		color: red;
+		#wireplumber.veryhigh {
+			color: red;
 		}
 
-	#battery {
-		padding-left: 1px;
+		#battery {
+			padding-left: 1px;
 		}
 
-	#battery.warning:not(.charging) {
-		color: #c98908;
+		#battery.warning:not(.charging) {
+			color: #c98908;
 		}
 
-	#battery.critical:not(.charging) {
-		color: #ff0000;
+		#battery.critical:not(.charging) {
+			color: #ff0000;
 		}
 
-	#backlight {
-		padding-top: 10px;
-		padding-right: 3px;
+		#backlight {
+			padding-top: 10px;
+			padding-right: 3px;
 		}
 
-	#memory {
-		padding-right: 10px;
-	}
-
-	#backlight.full {
-		color: yellow;
+		#memory {
+			padding-right: 10px;
 		}
 
-	#tray {
-		padding-bottom: 10px;
-		padding-top: 10px;
-		padding-left: 5px;
+		#backlight.full {
+			color: yellow;
 		}
 
-	#custom-powermenu {
-		color: #fa0018;
-		padding-bottom: 15px;
-		padding-left: 3px;
-		border-bottom: 3px solid;
-		border-color: white;
-		border-bottom-left-radius: 5px;
-		border-bottom-right-radius: 50px;
+		#tray {
+			padding-bottom: 10px;
+			padding-top: 10px;
+			padding-left: 5px;
 		}
 
-	tooltip {
-	  border: solid;
-	  border-width: 1.5px;
-	  border-radius: 8px;
-	  border-color: #cdd6f4;
+		#custom-powermenu {
+			color: #fa0018;
+			padding-bottom: 15px;
+			padding-left: 3px;
+			border-bottom: 3px solid;
+			border-color: white;
+			border-bottom-left-radius: 5px;
+			border-bottom-right-radius: 50px;
+		}
+
+		tooltip {
+		  border: solid;
+		  border-width: 1.5px;
+		  border-radius: 8px;
+		  border-color: #cdd6f4;
 		}
 		tooltip label {
 		  color: #cdd6f4;
@@ -436,32 +439,21 @@ programs.waybar.style =
 		  margin: 0.25px;
 		}
 
-	#pulseaudio-slider,#wireplumber,#battery,
-	#backlight,#tray,#custom-updates,
-	#custom-powermenu,#clock,#workspaces,#language,#memory {
-		background: #0e0c1a;
+		#pulseaudio-slider,#wireplumber,#battery,
+		#backlight,#tray,#custom-updates,
+		#custom-powermenu,#clock,#workspaces,#language,#memory {
+			background: #0e0c1a;
 		}
 	'';
-
-# ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
-# ✨			✨ ROFI ✨			✨
-# ┗━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-	programs.rofi = {
-		enable = true;
-		terminal = "kitty";
-		};
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ TEXTFOX ✨			✨
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-  imports = [ inputs.textfox.homeManagerModules.default ];
-
   textfox = {
     enable = true;
     profile = "xozu"; 
-	  };
+  };
   
 # ┏━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ ZSH ✨			✨
@@ -475,19 +467,20 @@ programs.waybar.style =
 		shellAliases = {
 			ls = "ls --color=tty";
 			c = "clear";
-			fetch = "fastfetch";
-			garbage = "sudo nix-collect-garbage -d";
-			update="cd /etc/nixos && sudo nix flake update && sudo nixos-rebuild switch --flake /etc/nixos#default && flatpak update";
-			rebuild = "sudo nixos-rebuild switch --flake /etc/nixos#default";
-			oldgen = "sudo nix-collect-garbage --delete-older-than 3d";
-			listgen = "nix-env --list-generations";
-			etc = "cd /etc/nixos";
-			config = "cd /etc/nixos && sudoedit configuration.nix";
-			home = "cd /etc/nixos && sudoedit home.nix";
-			flake = "cd /etc/nixos && sudoedit flake.nix";
-			hardware = "cd /etc/nixos && sudoedit hardware-configuration.nix";
-			};
+			update="cd $HOME/nixconfig && sudo nix flake update && sudo nixos-rebuild switch --flake ./#default && flatpak update";
+			rebuild = "sudo nixos-rebuild switch --flake $HOME/nixconfig#default";
+			listgen = "for profile in /nix/var/nix/profiles/system $HOME/.local/state/nix/profiles/profile $HOME/.local/state/nix/profiles/home-manager; do sudo nix-env --list-generations -p $profile; done";
+			garbage = "for profile in /nix/var/nix/profiles/system $HOME/.local/state/nix/profiles/profile $HOME/.local/state/nix/profiles/home-manager; do sudo nix-env --delete-generations +5 -p $profile; done";
+			wipe = "sudo nix-collect-garbage -d && nix-collect-garbage -d";
+			config = "cd $HOME/nixconfig && hx configuration.nix";
+			home = "cd $HOME/nixconfig && hx home.nix";
+			flake = "cd $HOME/nixconfig && hx flake.nix";
+			hardware = "cd $HOME/nixconfig && hx hardware-configuration.nix";
+			gitrollback = "git checkout HEAD^1";
+			unzip = "file-roller --extract-here";
+			error = "journalctl -u";
 		};
+	};
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ KITTY ✨			✨
@@ -503,8 +496,8 @@ programs.waybar.style =
 			use_font_shaping = true;
 			selecion_background = "#6a6094";
 			background_opacity = lib.mkForce 0.8;
-			};
 		};
+	};
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ STARSHIP ✨			✨
@@ -516,59 +509,59 @@ programs.waybar.style =
 		settings = {
 			format = "[](#a3aed2)[](bg:#a3aed2 fg:#090c0c)[](bg:#9f76f0 fg:#a3aed2)$directory[](fg:#9f76f0 bg:#394260)$git_branch$git_status[](fg:#394260 bg:#212736)$nodejs$rust$golang$php[](fg:#212736 bg:#1d2230)$time[](fg:#1d2230)$character";
 			directory = {
-			style = "fg:#e3e5e5 bg:#9f76f0";
-			format = "[ $path ]($style)";
-			truncation_length = 3;
-			truncation_symbol = "…/";
+				style = "fg:#e3e5e5 bg:#9f76f0";
+				format = "[ $path ]($style)";
+				truncation_length = 3;
+				truncation_symbol = "…/";
 			};
 
-		directory.substitutions = {
-			"Documents" = "󰈙 ";
-			"Downloads" = " ";
-			"Music" = " ";
-			"Pictures" = " ";
+			directory.substitutions = {
+				"Documents" = "󰈙 ";
+				"Downloads" = " ";
+				"Music" = " ";
+				"Pictures" = " ";
 			};
 
-		git_branch = {
-			symbol = "";
-			style = "bg:#394260";
-			format = "[[ $symbol $branch ](fg:#769ff0 bg:#394260)]($style)";
+			git_branch = {
+				symbol = "";
+				style = "bg:#394260";
+				format = "[[ $symbol $branch ](fg:#769ff0 bg:#394260)]($style)";
 			};
 
-		git_status = {
-			style = "bg:#394260";
-			format = "[[($all_status$ahead_behind )](fg:#769ff0 bg:#394260)]($style)";
+			git_status = {
+				style = "bg:#394260";
+				format = "[[($all_status$ahead_behind )](fg:#769ff0 bg:#394260)]($style)";
 			};
 
-		nodejs = {
-			symbol = "";
-			style = "bg:#212736";
-			format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+			nodejs = {
+				symbol = "";
+				style = "bg:#212736";
+				format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
 			};
 
-		#the cute crab seems to be default symbol, make sure you have an emoji font installed like ttf-joypixels
-		rust = {
-			style = "bg:#212736";
-			format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+			#the cute crab seems to be default symbol, make sure you have an emoji font installed like ttf-joypixels
+			rust = {
+				style = "bg:#212736";
+				format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
 			};
 
-		golang = {
-			symbol = "";
-			style = "bg:#212736";
-			format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+			golang = {
+				symbol = "";
+				style = "bg:#212736";
+				format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
 			};
 
-		php = {
-			symbol = "";
-			style = "bg:#212736";
-			format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+			php = {
+				symbol = "";
+				style = "bg:#212736";
+				format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
 			};
 
-		time = {
-			disabled = false;
-			time_format = "%R";
-			style = "bg:#1d2230";
-			format = "[[  $time ](fg:#a0a9cb bg:#1d2230)]($style)";
+			time = {
+				disabled = false;
+				time_format = "%R";
+				style = "bg:#1d2230";
+				format = "[[  $time ](fg:#a0a9cb bg:#1d2230)]($style)";
 			};
 		};
 	};
@@ -580,7 +573,8 @@ programs.waybar.style =
 	stylix.targets = {
 		helix.enable = false;
 		waybar.enable = false;
-		};
+		fuzzel.enable = false;
+	};
 
 		programs.helix = {
 		enable = true;
@@ -596,10 +590,10 @@ programs.waybar.style =
 					insert = "bar";
 					normal = "block";
 					select = "underline";
-					};
+				};
 				file-picker = {
 					hidden = false;
-					};
+				};
 				statusline = {
 					left = [ "mode" "read-only-indicator" "file-modification-indicator" ];
 					center = [ "file-name" ];
@@ -609,9 +603,9 @@ programs.waybar.style =
 						normal = "NORMAL";
 						insert = "O-RIDE";
 						select = "SELECT";
-						};
 					};
 				};
+			};
 			keys = {
 				normal = {
 					j = "move_char_left";
@@ -623,7 +617,7 @@ programs.waybar.style =
 					O = "insert_at_line_start";
 					"ret" = [ "open_below" "normal_mode" ];
 					"S-ret" = [ "open_above" "normal_mode" ];
-					};
+				};
 				select = {
 					j = "move_char_left";
 					k = "move_visual_line_down";
@@ -631,99 +625,42 @@ programs.waybar.style =
 					K = "half_page_down";
 					i = "move_visual_line_up";
 					o = "insert_mode";
-					};
 				};
 			};
-			themes = {
-				"horizon-dark-custom" = {
-					inherits = "horizon-dark";
-					"ui.background" = "#14131D";
-					
-				};
+		};
+		themes = {
+			"horizon-dark-custom" = {
+				inherits = "horizon-dark";
+				"ui.background" = "#14131D";
+				"ui.statusline.normal" = "#7C69D2";
+				"ui.statusline.insert" = "#69D27C";
+				"ui.statusline.select" = "#69A3D2";
+				"ui.linenr" = "#696C90";
+				"ui.linenr.selected" = "#7563C6";
 			};
+		};
 	};
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ PACKAGES ✨			✨
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ 
 
-  home.packages = with pkgs; [
-
-  (pkgs.stdenvNoCC.mkDerivation rec {
-    name = "rofi-launchers";
-
-    src = pkgs.fetchFromGitHub {
-      owner = "X07U";
-      repo = "nixos-rofi";
-      rev = "master";
-      hash = "sha256-MSNQDjU7lIcPqNQs1Y1oJOISbHQkxU5pXpfM+Wm7r9Q=";
-    };
-
-    buildInputs = [ pkgs.rofi ];
-
-    postPatch = ''
-      files=$(find files/scripts -type l)
-      for file in $files; do
-        substituteInPlace $file \
-          --replace-fail '$HOME/.config/rofi' "$out/share" \
-          --replace-fail "rofi " "${pkgs.lib.getExe pkgs.rofi} "
-      done
-
-      files=$(find files -type f -name "*.rasi")
-      for file in $files; do
-        substituteInPlace $file \
-          --replace-quiet '~/.config/rofi' "$out/share"
-      done
-    '';
-
-    installPhase = ''
-      runHook preInstall
-
-      # Install all scripts as binaries
-      mkdir -p $out/bin
-      for script in files/scripts/*; do
-        install -Dm755 $script $out/bin/$(basename $script)
-      done
-
-      # Install Fonts
-      mkdir -p "$out/share/fonts"
-      cp -r fonts/* "$out/share/fonts"
-
-      # Install other necessary files
-      mkdir -p "$out/share"
-      cp -r files/* "$out/share"
-
-      runHook postInstall
-    '';
-
-    meta = {
-      description = "A collection of rofi launchers";
-      homepage = "https://github.com/X07U/nixos-rofi";
-      maintainers = [];     
-    };
-  })
-  ];
-
 	programs.zathura.enable = true;
 	
-
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ HOME MANAGER ✨			✨
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  programs.home-manager.enable = true;
 
-  # Home Manager is pretty good at managing dotfiles. The primary way to manage
-  # plain files is through 'home.file'.
   home.file = {
 
-     };
+	};
 
   home.sessionVariables = {
 		BROWSER = "firefox";
 		TERMINAL = "kitty";
-	  };
+  };
 
-  programs.home-manager.enable = true;
-  
 # ┏━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ GTK ✨			✨
 # ┗━━━━━━━━━━━━━━━━━━━━━━┛  
@@ -735,14 +672,14 @@ programs.waybar.style =
 		iconTheme.package = pkgs.catppuccin-papirus-folders.override {
 	    flavor = "mocha";
 	    accent = "lavender";
-		  };
-		iconTheme.name = "Papirus-Dark";
 	  };
+		iconTheme.name = "Papirus-Dark";
+  };
 
 	qt = {
 	  enable = true;
 	  platformTheme.name = "gtk";
-		};
+	};
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ DUNST ✨			✨
@@ -752,49 +689,49 @@ programs.waybar.style =
 		enable = true;
   	settings = {
 		  global = {
-	    allow_markup = "yes";
-	    markup = "yes";
-	    format = "<span foreground='#8d5bb4'><b>%s</b></span>\n%b";
-	    sort = "yes";
-	    indicate_hidden = "yes";
-	    bounce_freq = 0;
-	    show_age_threshold = 60;
-	    word_wrap = "yes";
-	    ignore_newline = false;
-	    origin = "top-center";
-	    transparency = 0;
-	    idle_threshold = 120;
-	    monitor = 0;
-	    follow = "mouse";
-	    sticky_history = "yes";
-	    line_height = 0;
-	    separator_height = 2;
-	    padding = 12;
-	    horizontal_padding = 12;
-	    separator_width = 1;
-	    startup_notification = false;
-	    corner_radius = 15;
-	    frame_width = 1;
-	    width = 400;
-	    progress_bar_max_width = 400;
-	    progress_bar_min_width = 400;
-	    progress_bar_height = 10;
-	    progress_bar_frame_width = 1;
-	    progress_bar_corner_radius = 5;
-	    scale = 1;
-	    min_icon_size = 64;
-	    max_icon_size = 64;
-	    alignment = "center";
-	    vertical_alignment = "center";
+		    allow_markup = "yes";
+		    markup = "yes";
+		    format = "<span foreground='#8d5bb4'><b>%s</b></span>\n%b";
+		    sort = "yes";
+		    indicate_hidden = "yes";
+		    bounce_freq = 0;
+		    show_age_threshold = 60;
+		    word_wrap = "yes";
+		    ignore_newline = false;
+		    origin = "top-center";
+		    transparency = 0;
+		    idle_threshold = 120;
+		    monitor = 0;
+		    follow = "mouse";
+		    sticky_history = "yes";
+		    line_height = 0;
+		    separator_height = 2;
+		    padding = 12;
+		    horizontal_padding = 12;
+		    separator_width = 1;
+		    startup_notification = false;
+		    corner_radius = 15;
+		    frame_width = 1;
+		    width = 400;
+		    progress_bar_max_width = 400;
+		    progress_bar_min_width = 400;
+		    progress_bar_height = 10;
+		    progress_bar_frame_width = 1;
+		    progress_bar_corner_radius = 5;
+		    scale = 1;
+		    min_icon_size = 64;
+		    max_icon_size = 64;
+		    alignment = "center";
+		    vertical_alignment = "center";
 		  };
-    urgency_low = {
-	    timeout = 5;
+	    urgency_low = {
+		    timeout = 5;
 	    };
-    urgency_normal = {
-	    timeout = 20;
+	    urgency_normal = {
+		    timeout = 20;
 	    };
-    urgency_critical = {
-	    timeout = 0;
+	    urgency_critical = {
+		    timeout = 0;
 	    };
 	  };
 	};
@@ -805,7 +742,7 @@ programs.waybar.style =
 
 	programs = {
 		mpv.enable = true;
-		};
+	};
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ EZA ✨			✨
@@ -815,7 +752,7 @@ programs.waybar.style =
 		enable = true;
 		icons = "always";
 		extraOptions = [ "-T" ];
- 		};
+	};
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ WLOGOUT ✨			✨
@@ -844,7 +781,7 @@ programs.waybar.style =
 		    action = "systemctl poweroff";
 		    keybind = "s";
 			}
-			];
+		];
 		style = ''
 		* {
     background-image: none;
@@ -853,8 +790,8 @@ programs.waybar.style =
 		}
 
 		window {
-	    background-image: url("/home/xozu/Pictures/wallpaper.png");
-			}
+			background-color: rgba(0, 0, 0, 0.4);	
+		}
 
 		button {
 	    color: #FFFFFF;
@@ -864,61 +801,61 @@ programs.waybar.style =
 	    border: none;
 		  border-radius: 10px;
 		  outline-style: none;
-			}
+		}
 
 		/* options */ 
 		#lock {
-	    background-color: #7C69D2;
-			background-image: url("/home/xozu/Downloads/lock.png");
+	    background-color: #D3CFF9;
+			background-image: url("/home/xozu/Pictures/config_pictures/wlogout/lock.png");
 	    border-radius: 5px 0px 0px 0px;
-	    margin : 50px 0px 0px 110px;
-			}
+	    margin : 200px 0px 0px 500px;
+		}
 
 		#reboot {
 	    background-color: #9887E0;
-			background-image: url("/home/xozu/Downloads/lock.png");
+			background-image: url("/home/xozu/Pictures/config_pictures/wlogout/reboot.png");
 		  border-radius: 0px 0px 0px 5px;
-	    margin : 0px 0px 250px 550px;
-			}
+	    margin : 0px 0px 200px 500px;
+		}
 
 		#logout {
 	    background-color: #B5A6ED;
-			background-image: url("/home/xozu/Downloads/lock.png");
+			background-image: url("/home/xozu/Pictures/config_pictures/wlogout/logout.png");
 		  border-radius: 0px 5px 0px 0px;
-	    margin : 250px 550px 0px 0px;
-			}
+	    margin : 200px 500px 0px 0px;
+		}
 
 		#shutdown {
-	    background-color: #D3CFF9;
-			background-image: url("/home/xozu/Downloads/lock.png");
+	    background-color: #7C69D2;
+			background-image: url("/home/xozu/Pictures/config_pictures/wlogout/shutdown.png");
 		  border-radius: 0px 0px 5px 0px;
-	    margin : 0px 550px 250px 0px;
-			}
+	    margin : 0px 500px 200px 0px;
+		}
 
 		/* options on hover */ 
 		button:hover {
 	    background-size: 25%;
-			}
+		}
 
 		button:hover#lock {
 	    border-radius: 10px 10px 0px 10px;
-	    margin : 80px 0px 0px 530px;
-			}
+	    margin : 150px 0px 0px 475px;
+		}
 
 		button:hover#reboot {
 	    border-radius: 10px 0px 10px 10px;
-	    margin : 0px 0px 80px 530px;
-			}
+	    margin : 0px 0px 150px 475px;
+		}
 
 		button:hover#logout {
 	    border-radius: 10px 10px 10px 0px;
-	    margin : 80px 530px 0px 0px;
-			}
+	    margin : 150px 475px 0px 0px;
+		}
 
 		button:hover#shutdown {
 	    border-radius: 0px 10px 10px 10px;
-	    margin: 0px 530px 80px 0px;
-			}
+	    margin: 0px 475px 150px 0px;
+		}
 		'';
 	};
 
@@ -926,24 +863,51 @@ programs.waybar.style =
 # ✨			✨ NCMPCPP ✨			✨
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-	programs.ncmpcpp.enable = true;
+	programs.ncmpcpp = {
+		enable = true;
+		mpdMusicDir = "~/music";
+		settings = {
+			mpd_host = "localhost";
+			mpd_port = "6600";
+			
+		};
+	};
 
+# ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+# ✨			✨ WALKER ✨			✨
+# ┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+	programs.fuzzel = {
+		enable = true;
+		settings = {
+			# font = "Iosevka Nerd Font";
+			# use-bold = true;
+			colors = {
+				background = "24273add";
+				text = "cad3f5ff";
+				prompt = "b8c0e0ff";
+				placeholder = "8087a2ff";
+				input = "cad3f5ff";
+				match = "c6a0f6ff";
+				selection = "5b6078ff";
+				selection-text = "cad3f5ff";
+				selection-match = "c6a0f6ff";
+				counter = "8087a2ff";
+				border = "c6a0f6ff";
+			};
+			border = {
+				width = 3;
+				radius = 15;
+			};
+		};
+	};
+	
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ OTHER ✨			✨
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 	programs.btop.enable = true;
 
-	programs.yazi.enable = true;
 	programs.zoxide.enable = true;
-
-	#This is very handy. In this case it rewrites use_gtk_colors to true in Hyprlaunchers config file
-	home.activation.modifyHyprlauncherConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-  if [ -f ~/.config/hyprlauncher/config.json ]; then
-    jq '.window.use_gtk_colors = true' ~/.config/hyprlauncher/config.json > ~/.config/hyprlauncher/config.json.tmp
-    mv ~/.config/hyprlauncher/config.json.tmp ~/.config/hyprlauncher/config.json
-  fi
-'';
-
-
+	
 }
