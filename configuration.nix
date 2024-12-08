@@ -8,7 +8,17 @@
   ];
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nixpkgs.config.allowUnfree = true; 
-  environment.sessionVariables.NIXOS_OZONE_WL = "1";
+  
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1";
+# these 3 are the easiest way to setup qt themes globally, the config options are horrible. 
+    QT_QPA_PLATFORM = "wayland";
+    QT_QPA_PLATFORMTHEME = "qt5ct";
+    QT_STYLE_OVERRIDE = "kvantum";
+# not sure about qt6, but some packages claim they support both qt5 and qt6, it's such a mess
+    # QT_QPA_PLATFORMTHEME_qt6 = "qt6ct";
+  };
+  
   system.stateVersion = "24.05"; 
   powerManagement.enable = true;
   services.thermald.enable = true;
@@ -57,8 +67,16 @@
     zsh.enable = true;
     file-roller.enable = true;
     xfconf.enable = true;
-    git.enable = true;
   };
+
+nixpkgs.overlays = [
+    (final: prev: {
+      catppuccin-kvantum = prev.catppuccin-kvantum.override {
+        accent = "lavender";
+        variant = "mocha";
+      };
+    })
+  ];
 
   environment.systemPackages = with pkgs; [
     gimp
@@ -72,6 +90,16 @@
     greetd.tuigreet
     pavucontrol
     mpd
+    qalculate-qt
+    featherpad
+    lightly-qt
+    libsForQt5.qt5.qtwayland
+    libsForQt5.qtstyleplugin-kvantum
+    kdePackages.qt6ct
+    (catppuccin-kvantum.override {
+      accent = "mauve";
+      variant = "mocha";
+    })
   ];
 
   fonts.packages = with pkgs; [
@@ -171,6 +199,10 @@
       "xozu" = import ./home.nix;
     };
   };
+
+ # ✨ QT ✨ 
+
+# QT is a bitch. The only way I made it work, is via Home Manager and config variables (see at the top). The wiki leads to a shitfest forum post.
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ✨			✨ STYLIX ✨			✨
